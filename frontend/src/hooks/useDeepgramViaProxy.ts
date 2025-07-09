@@ -1,0 +1,29 @@
+// hooks/useDeepgramViaProxy.ts
+import { useEffect, useRef, useState } from "react";
+import { createAudioWorklet } from "../audio/mic-worklet-wrapper";
+
+export function useDeepgramViaProxy() {
+  const [text, setText] = useState("");
+  const wsRef = useRef<WebSocket | null>(null);
+  const bufferQueue = useRef<ArrayBuffer[]>([]);
+
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:8080");
+    ws.binaryType = "arraybuffer";
+    wsRef.current = ws;
+
+    ws.onmessage = (e) => {
+      const { final, text: t } = JSON.parse(e.data);
+      // setText((p) => (final ? p + " " + t + "\n" : p.replace(/[\s\S]*$/, t)));
+      setText(`${final ? "-> " : ""}${t}`);
+    };
+
+    createAudioWorklet((buf) => {
+      if (ws.readyState === 1) ws.send(buf); // send straight away
+    });
+
+    return () => ws.close();
+  }, []);
+
+  return text;
+}
