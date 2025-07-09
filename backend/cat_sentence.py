@@ -12,6 +12,16 @@ Usage:
     python classify_sum.py
 """
 
+
+
+
+# add third classification label with each sentence 
+
+
+
+
+
+
 from transformers import pipeline
 
 def main():
