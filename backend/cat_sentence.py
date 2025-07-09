@@ -15,11 +15,7 @@ Usage:
 
 
 
-# add third classification label with each sentence 
-
-
-
-
+# add third classification label with each sentence describing priority of observation/activity
 
 
 from transformers import pipeline
