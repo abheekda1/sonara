@@ -1,1 +1,0 @@
-Breakfast - cereal with bananas and Protein Drink.

@@ -1,0 +1,3 @@
+deepgram-sdk
+websockets
+python-dotenv
