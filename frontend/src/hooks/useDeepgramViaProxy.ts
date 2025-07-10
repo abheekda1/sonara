@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { createAudioWorklet } from "../audio/mic-worklet-wrapper";
 
-export function useDeepgramViaProxy() {
+export function useDeepgramViaProxy(isStreaming = true) {
   // const [text, setText] = useState("");
   const [data, setData] = useState(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080");
+    if (!isStreaming) return null;
+
+    const ws = new WebSocket("ws://localhost:8000/ws");
     ws.binaryType = "arraybuffer";
     wsRef.current = ws;
 
