@@ -13,6 +13,11 @@ import nltk
 nltk.download('punkt_tab')
 from nltk.tokenize import sent_tokenize
 
+
+
+# add third classification label with each sentence describing priority of observation/activity
+
+
 from transformers import pipeline
 
 # Candidate labels from your specification
