@@ -1,77 +1,30 @@
-import os
-import asyncio
-import json
-from websockets.asyncio.server import serve
-from dotenv import load_dotenv
-from deepgram import DeepgramClient, LiveOptions, LiveTranscriptionEvents
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from classify import classify_sentences
+from ws import handle_browser
 
-load_dotenv()
-DG_API_KEY = os.getenv("DEEPGRAM_API_KEY")
-if not DG_API_KEY:
-    raise ValueError("DEEPGRAM_API_KEY not set")
+app = FastAPI()
 
-dg = DeepgramClient(DG_API_KEY)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # 🔒 Change to specific domains in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-async def handle_browser(ws):
-    print("🌐 Browser connected")
+class TranscriptInput(BaseModel):
+    transcript: str
 
-    dg_ws = dg.listen.websocket.v("1")
-    loop = asyncio.get_running_loop()
+@app.post("/classify")
+async def classify(input: TranscriptInput):
+    return {"classified": classify_sentences(input.transcript)}
 
-    # All handlers must be async
-    async def on_error(self, error):
-        print("DG error:", error)
-
-    async def on_close(self, close):
-        print("🛑 DG closed")
-
-    async def on_open(self, open):
-        print("✅ Deepgram connection open")
-
-    async def on_transcript(self, result):
-        alt = result.channel.alternatives[0]
-        if alt.transcript:
-            await ws.send(json.dumps({
-                "final": result.is_final,
-                "text": alt.transcript
-            }))
-
-    dg_ws.on(LiveTranscriptionEvents.Error, lambda *args, **kwargs: asyncio.run_coroutine_threadsafe(on_error(*args, **kwargs), loop))
-    dg_ws.on(LiveTranscriptionEvents.Close, lambda *args, **kwargs: asyncio.run_coroutine_threadsafe(on_close(*args, **kwargs), loop))
-    dg_ws.on(LiveTranscriptionEvents.Open, lambda *args, **kwargs: asyncio.run_coroutine_threadsafe(on_open(*args, **kwargs), loop))
-    dg_ws.on(LiveTranscriptionEvents.Transcript, lambda *args, **kwargs: asyncio.run_coroutine_threadsafe(on_transcript(*args, **kwargs), loop))
-
-    dg_ws.start(LiveOptions(
-        model="nova-3",
-        language="en-US",
-        encoding="linear16",
-        sample_rate=48000,
-        interim_results=True,
-        smart_format=True,
-    ))
-
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
     try:
-        async for message in ws:
-            if isinstance(message, bytes):
-                dg_ws.send(message)
-    except Exception:
-        pass
-    finally:
+        await handle_browser(websocket)
+    except WebSocketDisconnect:
         print("👋 Browser disconnected")
-        dg_ws.finish()
-
-async def send_transcript(pkt, ws):
-    alt = pkt.channel.alternatives[0]
-    if alt.transcript:
-        await ws.send(json.dumps({
-            "final": pkt.is_final,
-            "text": alt.transcript
-        }))
-
-async def main():
-    async with serve(handle_browser, "0.0.0.0", 8080):
-        print("🚀 WS proxy on :8080")
-        await asyncio.Future()
-
-if __name__ == "__main__":
-    asyncio.run(main())
