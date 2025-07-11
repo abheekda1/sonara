@@ -14,9 +14,6 @@ export function useDeepgramViaProxy(streaming = true) {
     wsRef.current = ws;
 
     ws.onmessage = (e) => {
-      // const { final, text: t } = JSON.parse(e.data);
-      // setText((p) => (final ? p + " " + t + "\n" : p.replace(/[\s\S]*$/, t)));
-      // setText(`${final ? "-> " : ""}${t}`);
       setData(JSON.parse(e.data));
     };
 
@@ -27,6 +24,5 @@ export function useDeepgramViaProxy(streaming = true) {
     return () => ws.close();
   }, [streaming]);
 
-  // return text;
   return data;
 }
