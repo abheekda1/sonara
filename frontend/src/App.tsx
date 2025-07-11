@@ -5,6 +5,7 @@ import { StopIcon, PlayIcon } from "@heroicons/react/20/solid";
 import { ArrowUpOnSquareIcon } from "@heroicons/react/20/solid";
 import Navbar from "./components/Navbar";
 import { useAuth } from "./auth/useAuth";
+import WaveformLive from "./components/Waveform";
 
 export default function App() {
   const session = useAuth();
@@ -89,32 +90,36 @@ export default function App() {
           />
         )}
 
-        <button
-          className={`mt-4 btn ${streaming ? "btn-error" : "btn-success"}`}
-          onClick={() => setStreaming((p) => !p)}
-        >
-          {streaming ? (
-            <>
+        <div className="mt-4 flex items-center gap-2 flex-wrap">
+          <button
+            className={`btn ${streaming ? "btn-error" : "btn-success"}`}
+            onClick={() => setStreaming((p) => !p)}
+          >
+            {streaming ? (
               <StopIcon className="h-5 w-5 inline-block" />
-            </>
-          ) : (
-            <>
+            ) : (
               <PlayIcon className="h-5 w-5 inline-block" />
-            </>
-          )}
-        </button>
+            )}
+          </button>
 
-        <button
-          className="mt-4 btn btn-primary ml-2"
-          onClick={handleSubmit}
-          disabled={!transcript || streaming || loading}
-        >
-          {loading ? (
-            <span className="loading loading-ring"></span>
-          ) : (
-            <ArrowUpOnSquareIcon className="h-5 w-5 inline-block" />
+          <button
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            disabled={!transcript || streaming || loading}
+          >
+            {loading ? (
+              <span className="loading loading-ring"></span>
+            ) : (
+              <ArrowUpOnSquareIcon className="h-5 w-5 inline-block" />
+            )}
+          </button>
+
+          {streaming && (
+            <div className="h-[40px] overflow-hidden">
+              <WaveformLive bars={20} height={40} color="#3b82f6" />
+            </div>
           )}
-        </button>
+        </div>
 
         {results.length > 0 && (
           <div className="mt-6 space-y-4">
