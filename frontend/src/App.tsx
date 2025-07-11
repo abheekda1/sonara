@@ -72,14 +72,15 @@ export default function App() {
           <pre className="bg-gray-800 text-gray-500 p-4 rounded whitespace-pre-wrap">
             {transcript}{" "}
             <motion.span
-              key={tempTranscript?.text}
+              // key={tempTranscript?.}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
               className="text-gray-100"
             >
-              {!tempTranscript?.final ? tempTranscript?.text : ""}
+              {tempTranscript &&
+                (!tempTranscript.final ? tempTranscript.text : "")}
             </motion.span>
           </pre>
         ) : (
