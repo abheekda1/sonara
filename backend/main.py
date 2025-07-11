@@ -21,6 +21,22 @@ class TranscriptInput(BaseModel):
 async def classify(input: TranscriptInput):
     return {"classified": classify_sentences(input.transcript)}
 
+@app.post("/db/transcript")
+async def create_transcript(transcript: str):
+    return {"message": "Transcript created"}
+
+@app.put("/db/transcript")
+async def update_transcript(transcript_id: int, transcript: str):
+    return {"message": "Transcript updated"}
+
+@app.delete("/db/transcript")
+async def delete_transcript(transcript_id: int):
+    return {"message": "Transcript deleted"}
+
+@app.get("/db/transcript")
+async def get_transcript(transcript_id: int):
+    return {"message": "Transcript retrieved"}
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
