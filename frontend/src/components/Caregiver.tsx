@@ -111,24 +111,37 @@ export default function Caregiver({ fullName, role }: Props) {
 
       {results.length > 0 && (
         <div className="mt-6 space-y-4">
-          <motion.div className="rounded shadow">
-            {results.map((res, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className={`outline-1 badge-lg ${res.type.toLowerCase() === "observation" ? "badge-info" : "badge-warning"} badge-soft badge-outline inline-block text-white p-0.5 px-2 mx-0.5 rounded-md shadow-md text-left`}
-              >
-                <div className="flex flex-col space-y-0.5 leading-snug">
-                  <span className="text-[10px] uppercase text-gray-100 tracking-wide">
-                    {res.type || "unknown"}
-                  </span>
-                  <span className="text-sm text-white">{res.sentence}</span>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+          {results.map((res, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className={`outline-1 badge-lg ${res.type.toLowerCase() === "observation" ? "badge-info" : "badge-success"} badge-soft badge-outline inline-block text-white p-0.5 px-2 mb-1 mr-1 rounded-md shadow-md text-left`}
+            >
+              <div className="flex flex-col gap-1 p-2  rounded-md shadow-sm">
+                <select
+                  value={res.type}
+                  onChange={(e) => {
+                    const newType = e.target.value;
+                    console.log(newType);
+                    const updated = results.map((r, idx) =>
+                      idx === i ? { ...r, type: newType } : r,
+                    );
+                    setResults(updated);
+                    console.log(updated);
+                  }}
+                  className={`select select-xs ${res.type.toLowerCase() === "observation" ? "select-info" : "select-success"} w-fit border focus:outline-none focus:ring-2`}
+                >
+                  <option value="observation">Observation</option>
+                  <option value="activity">Activity</option>
+                </select>
+                <span className="text-sm text-gray-100 leading-relaxed">
+                  {res.sentence}
+                </span>
+              </div>
+            </motion.div>
+          ))}
         </div>
       )}
     </div>
