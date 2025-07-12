@@ -42,7 +42,7 @@ async def handle_browser(ws: WebSocket):
     dg_ws.on(LiveTranscriptionEvents.Transcript, lambda *a, **k: asyncio.run_coroutine_threadsafe(on_transcript(*a, **k), loop))
 
     dg_ws.start(LiveOptions(
-        model="nova-3",
+        model="nova-3-medical",
         language="en-US",
         encoding="linear16",
         sample_rate=48000,
