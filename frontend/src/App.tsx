@@ -1,11 +1,33 @@
 import { useEffect, useState } from "react";
 import { useDeepgramViaProxy } from "./hooks/useDeepgramViaProxy";
 import { motion } from "motion/react";
-import { StopIcon, PlayIcon } from "@heroicons/react/20/solid";
+import { StopIcon, MicrophoneIcon } from "@heroicons/react/20/solid";
 import { ArrowUpOnSquareIcon } from "@heroicons/react/20/solid";
 import Navbar from "./components/Navbar";
 import { useAuth } from "./auth/useAuth";
 import WaveformLive from "./components/Waveform";
+import { supabase } from "./util/supabase";
+
+async function getUserRole() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("profiles") // or your custom table
+    .select("role")
+    .eq("id", user.id) // assuming id matches auth.users.id
+    .single();
+
+  if (error) {
+    console.error("Failed to fetch role:", error);
+    return null;
+  }
+
+  return data.role;
+}
 
 export default function App() {
   const session = useAuth();
@@ -16,6 +38,7 @@ export default function App() {
   );
   const [streaming, setStreaming] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
 
   const tempTranscript = useDeepgramViaProxy(streaming); // assumes this hook supports a stop/start flag
 
@@ -25,6 +48,12 @@ export default function App() {
       setTranscript((p) => p + " " + tempTranscript?.text);
     }
   }, [tempTranscript]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    getUserRole().then((r) => setRole(r));
+  }, [session]);
 
   const handleSubmit = async () => {
     setStreaming(false); // stop recording
@@ -55,9 +84,10 @@ export default function App() {
             className="text-xl font-bold mb-4 text-gray-400"
           >
             Welcome to Sonara,{" "}
-            <h1 className="text-gray-200">
+            <p className="text-gray-200">
               {session.user.user_metadata.full_name || "Sonara User"}
-            </h1>
+            </p>
+            <p className="text-sm text-gray-700">{role?.toUpperCase()}</p>
           </motion.h1>
         ) : (
           <motion.h1
@@ -68,6 +98,7 @@ export default function App() {
             Please log in
           </motion.h1>
         )}
+
         {streaming ? (
           <pre className="bg-gray-800 text-gray-500 p-4 rounded whitespace-pre-wrap">
             {transcript}{" "}
@@ -99,7 +130,7 @@ export default function App() {
             {streaming ? (
               <StopIcon className="h-5 w-5 inline-block" />
             ) : (
-              <PlayIcon className="h-5 w-5 inline-block" />
+              <MicrophoneIcon className="h-5 w-5 inline-block" />
             )}
           </button>
 
