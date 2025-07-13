@@ -1,3 +1,9 @@
 deepgram-sdk
 websockets
 python-dotenv
+fastapi
+uvicorn
+transformers
+torch
+nltk
+pydantic
