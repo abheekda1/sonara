@@ -164,7 +164,7 @@ export default function Record({
     }, 4000);
   };
 
-  const handleSubmit = async () => {
+  const handleClassify = async () => {
     setStreaming(false);
     setLoading(true);
     try {
@@ -174,9 +174,21 @@ export default function Record({
         body: JSON.stringify({ transcript }),
       });
       const data = await res.json();
-      setResults([]); // clear previous results
-      setResults(data.classified);
-      // setResults(data.classified);
+
+      const newResults = data.classified;
+
+      setResults(newResults);
+
+      // Preserve manual category changes
+      // const merged = newResults.map((newItem) => {
+      //   const existing = results.find((r) => r.sentence === newItem.sentence);
+      //   return {
+      //     sentence: newItem.sentence,
+      //     type: existing?.type ?? newItem.type, // Keep old type if manually changed
+      //   };
+      // });
+
+      // setResults(merged);
     } catch (err) {
       console.error("❌ Classification error:", err);
     } finally {
@@ -224,24 +236,28 @@ export default function Record({
         setSelectedTranscriptId(inserted.id);
       }
 
+      const res = await fetch("http://localhost:8000/classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript }),
+      });
+      const data = await res.json();
+
+      const newResults = data.classified;
+
+      // Preserve manual category changes
+      const merged = newResults.map((newItem) => {
+        const existing = results.find((r) => r.sentence === newItem.sentence);
+        return {
+          sentence: newItem.sentence,
+          type: existing?.type ?? newItem.type, // Keep old type if manually changed
+        };
+      });
+
+      setResults(merged);
+
       // Always classify latest transcript (even on update)
-      let classified = results;
-
-      if (!results.length) {
-        const classifyRes = await fetch("http://localhost:8000/classify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ transcript }),
-        });
-        const classifyData = await classifyRes.json();
-        classified = classifyData.classified;
-
-        if (!classified || classified.length === 0) {
-          throw new Error("Classification failed or returned empty.");
-        }
-
-        setResults(classified);
-      }
+      let classified = merged;
 
       const sentencePayload = classified.map((r, i) => ({
         transcript_id: transcriptId,
@@ -350,7 +366,7 @@ export default function Record({
 
         <button
           className="btn btn-outline"
-          onClick={handleSubmit}
+          onClick={handleClassify}
           disabled={!transcript || streaming || loading}
         >
           {loading ? (
