@@ -11,7 +11,7 @@ export function useDeepgramViaProxy(streaming = true, language = "en-US") {
   useEffect(() => {
     if (!streaming) return;
 
-    const ws = new WebSocket("ws://localhost:8000/ws");
+    const ws = new WebSocket(import.meta.env.VITE_BACKEND_WS + "/ws");
     ws.binaryType = "arraybuffer";
     wsRef.current = ws;
 
