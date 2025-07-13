@@ -71,11 +71,15 @@ export default function Record({
         return;
       }
 
-      const cleaned =
-        data.map((row) => ({
-          id: row.patient.id,
-          full_name: row.patient.full_name,
-        })) ?? [];
+      const cleaned = data.map((row) => {
+        const patient = Array.isArray(row.patient)
+          ? row.patient[0]
+          : row.patient;
+        return {
+          id: patient?.id ?? null,
+          full_name: patient?.full_name ?? "",
+        };
+      });
 
       setPatients(cleaned);
       if (cleaned.length > 0 && !selectedPatient) {
