@@ -73,8 +73,8 @@ export default function Record({
 
       const cleaned =
         data.map((row) => ({
-          id: row.patient[0].id,
-          full_name: row.patient[0].full_name,
+          id: row.patient.id,
+          full_name: row.patient.full_name,
         })) ?? [];
 
       setPatients(cleaned);
@@ -168,7 +168,7 @@ export default function Record({
     setStreaming(false);
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/classify", {
+      const res = await fetch(import.meta.env.VITE_BACKEND + "/classify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ transcript }),
@@ -236,7 +236,7 @@ export default function Record({
         setSelectedTranscriptId(inserted.id);
       }
 
-      const res = await fetch("http://localhost:8000/classify", {
+      const res = await fetch(import.meta.env.VITE_BACKEND + "/classify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ transcript }),
