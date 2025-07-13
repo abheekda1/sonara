@@ -15,7 +15,7 @@ export default function WaveformLive({
   const [levels, setLevels] = useState<number[]>(Array(bars).fill(0));
   const audioRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(null);
 
   useEffect(() => {
     let audioCtx: AudioContext;

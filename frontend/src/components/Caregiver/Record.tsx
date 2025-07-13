@@ -17,7 +17,7 @@ interface Props {
   setSelectedPatient: (id: string | null) => void;
   selectedTranscriptId: string | null;
   setSelectedTranscriptId: (id: string | null) => void;
-  setRefreshKey: (key: string) => void;
+  setRefreshKey: (a: (b: number) => number) => void;
 }
 
 export default function Record({
@@ -63,7 +63,7 @@ export default function Record({
 
       const { data, error } = await supabase
         .from("profile_patients")
-        .select("patient:patient_id(*)")
+        .select("patient:patient_id(id, full_name)")
         .eq("caregiver_id", user.id);
 
       if (error) {
@@ -72,9 +72,9 @@ export default function Record({
       }
 
       const cleaned =
-        data?.map((row) => ({
-          id: row.patient.id,
-          full_name: row.patient.full_name,
+        data.map((row) => ({
+          id: row.patient[0].id,
+          full_name: row.patient[0].full_name,
         })) ?? [];
 
       setPatients(cleaned);
@@ -246,26 +246,30 @@ export default function Record({
       const newResults = data.classified;
 
       // Preserve manual category changes
-      const merged = newResults.map((newItem) => {
-        const existing = results.find((r) => r.sentence === newItem.sentence);
-        return {
-          sentence: newItem.sentence,
-          type: existing?.type ?? newItem.type, // Keep old type if manually changed
-        };
-      });
+      const merged = newResults.map(
+        (newItem: { sentence: string; type: string }) => {
+          const existing = results.find((r) => r.sentence === newItem.sentence);
+          return {
+            sentence: newItem.sentence,
+            type: existing?.type ?? newItem.type, // Keep old type if manually changed
+          };
+        },
+      );
 
       setResults(merged);
 
       // Always classify latest transcript (even on update)
-      let classified = merged;
+      const classified = merged;
 
-      const sentencePayload = classified.map((r, i) => ({
-        transcript_id: transcriptId,
-        sequence_id: i,
-        text: r.sentence,
-        category: r.type,
-        manually_changed: false,
-      }));
+      const sentencePayload = classified.map(
+        (r: { sentence: string; type: string }, i: string) => ({
+          transcript_id: transcriptId,
+          sequence_id: i,
+          text: r.sentence,
+          category: r.type,
+          manually_changed: false,
+        }),
+      );
 
       const { error: sErr } = await supabase
         .from("sentences")
@@ -278,7 +282,7 @@ export default function Record({
       showToast("Upload failed. Check console.", "error");
     } finally {
       setLoading(false);
-      setRefreshKey((k) => k + 1);
+      setRefreshKey((k: number) => k + 1);
     }
   };
 
