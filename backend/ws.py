@@ -15,16 +15,29 @@ dg = DeepgramClient(DG_API_KEY)
 async def handle_browser(ws: WebSocket):
     print("🌐 Browser connected")
 
+    try:
+        config = await ws.receive_text()
+        config_data = json.loads(config)
+        language = config_data.get("language", "en-US")
+        await ws.send_text(json.dumps({"language": language}))
+    except Exception as e:
+        print("❌ Invalid config message:", e)
+        await ws.send_text(json.dumps({"error": "Invalid config message"}))
+        return
+
     dg_ws = dg.listen.live.v("1")
-    loop = asyncio.get_running_loop()  # 🔥 capture the main event loop here
+    loop = asyncio.get_running_loop()
 
     async def on_transcript(self, result):
-        alt = result.channel.alternatives[0]
-        if alt.transcript:
-            await ws.send_text(json.dumps({
-                "final": result.is_final,
-                "text": alt.transcript
-            }))
+        try:
+            alt = result.channel.alternatives[0]
+            if alt.transcript:
+                await ws.send_text(json.dumps({
+                    "final": result.is_final,
+                    "text": alt.transcript
+                }))
+        except Exception as e:
+            print("⚠️ Failed to forward transcript:", e)
 
     async def on_open(self, open):
         print("✅ Deepgram connection open")
@@ -35,20 +48,22 @@ async def handle_browser(ws: WebSocket):
     async def on_error(self, error):
         print("❌ Deepgram error:", error)
 
-    # Use thread-safe coroutine scheduling
+    # Wire up event handlers
     dg_ws.on(LiveTranscriptionEvents.Open, lambda *a, **k: asyncio.run_coroutine_threadsafe(on_open(*a, **k), loop))
     dg_ws.on(LiveTranscriptionEvents.Close, lambda *a, **k: asyncio.run_coroutine_threadsafe(on_close(*a, **k), loop))
     dg_ws.on(LiveTranscriptionEvents.Error, lambda *a, **k: asyncio.run_coroutine_threadsafe(on_error(*a, **k), loop))
     dg_ws.on(LiveTranscriptionEvents.Transcript, lambda *a, **k: asyncio.run_coroutine_threadsafe(on_transcript(*a, **k), loop))
 
-    dg_ws.start(LiveOptions(
-        model="nova-3-medical",
-        language="en-US",
-        encoding="linear16",
-        sample_rate=48000,
-        interim_results=True,
-        smart_format=True,
-    ))
+    options = LiveOptions(
+            model="nova-3-medical" if language == "en-US" else "nova-3-general",
+            language=language if language == "en-US" else "multi",
+            encoding="linear16",
+            sample_rate=48000,
+            interim_results=True,
+            smart_format=True,
+        )
+    print(options)
+    dg_ws.start(options)
 
     try:
         while True:
