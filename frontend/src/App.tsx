@@ -3,9 +3,11 @@ import { motion } from "motion/react";
 import Navbar from "./components/Navbar";
 import { supabase } from "./util/supabase";
 import { useAuth } from "./auth/useAuth";
-import Caregiver from "./components/Caregiver";
+import Record from "./components/Caregiver/Record";
+import Dashboard from "./components/Caregiver/Dashboard";
+import PatientTranscripts from "./components/Patient/PatientTranscripts";
 
-async function getUserRole() {
+async function getUserRole(): Promise<string | null> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -28,6 +30,11 @@ async function getUserRole() {
 export default function App() {
   const session = useAuth();
   const [role, setRole] = useState<string | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
+  const [selectedTranscriptId, setSelectedTranscriptId] = useState<
+    string | null
+  >(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!session) return;
@@ -38,10 +45,37 @@ export default function App() {
     <>
       <Navbar />
       {session ? (
-        <Caregiver
-          fullName={session.user.user_metadata.full_name || "Sonara User"}
-          role={role}
-        />
+        <>
+          {role === "caregiver" && (
+            <>
+              <Record
+                fullName={session.user.user_metadata.full_name || "Sonara User"}
+                role={role}
+                selectedPatient={selectedPatient}
+                setSelectedPatient={setSelectedPatient}
+                selectedTranscriptId={selectedTranscriptId}
+                setSelectedTranscriptId={setSelectedTranscriptId}
+                setRefreshKey={setRefreshKey}
+              />
+              <Dashboard
+                selectedPatient={selectedPatient}
+                selectedTranscriptId={selectedTranscriptId}
+                setSelectedTranscriptId={setSelectedTranscriptId}
+                refreshKey={refreshKey}
+              />
+            </>
+          )}
+          {role === "patient" && <PatientTranscripts />}
+          {role === null && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-6 text-gray-400"
+            >
+              Your account has no role assigned. Please contact support.
+            </motion.p>
+          )}
+        </>
       ) : (
         <motion.h1
           initial={{ opacity: 0, x: -10 }}
